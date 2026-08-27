@@ -1,7 +1,9 @@
 # BIOS 611 — Programming in R
 
-This folder contains the written responses in `answers.md` and runnable R
-examples/checks in `solutions.R`. Run the code with:
+The single-file submission is `submission.Rmd`; it contains the written
+responses and runnable R code for Problems 1–8. The older `answers.md` and
+`solutions.R` files are retained as a plain-text backup and a script-only test
+copy. Run the script-only checks with:
 
 ```bash
 Rscript solutions.R

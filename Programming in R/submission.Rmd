@@ -1,0 +1,140 @@
+---
+title: "BIOS 611 — Programming in R"
+output: html_document
+---
+
+This single file contains the answers and runnable code for Problems 1–8.
+
+## Problem 1
+
+`<-` assigns in the current evaluation environment. `<<-` searches enclosing
+parent environments for an existing binding and updates the first one it finds;
+if it finds none, it creates the binding in the global environment. This makes
+`<<-` useful when a returned function (a closure) needs to update state held by
+the function that created it.
+
+## Problem 2
+
+No new evaluation rule is strictly necessary. `1:10` is the infix form of the
+primitive colon operator, equivalent to calling ``:`(1, 10)``. The existing
+rule for evaluating a function/operator call explains why it returns the
+integer vector `c(1, 2, ..., 10)`. A separate rule for `:` can be a convenient
+shortcut, but it is not a fundamentally new kind of evaluation.
+
+## Problem 3
+
+The loop finishes with `test_value` equal to 100. The body of a `for` loop is
+evaluated in the current evaluation environment; R does not create a fresh
+lexical environment for every iteration. Therefore `<-` changes the binding in
+the function environment if the loop is inside a function, or in the global
+environment if it is run at the top level.
+
+## Problem 4
+
+The following test shows that assignments made in a `while` body remain
+available after the loop:
+
+```{r}
+while_scope_test <- function() {
+  test_value <- 10
+  x <- 1
+  while (x <= 100) {
+    test_value <- x
+    x <- x + 1
+  }
+  c(test_value = test_value, next_x = x)
+}
+
+while_scope_test()
+```
+
+The result is `test_value = 100` and `next_x = 101`, so `while` follows the
+same environment rule as `for`: it does not make a new environment per
+iteration.
+
+## Problem 5
+
+The returned function is a closure. It keeps two private bindings and updates
+them with `<<-` on every call:
+
+```{r}
+make_fib_counter <- function() {
+  first <- 1
+  second <- 1
+
+  function() {
+    result <- first
+    first <<- second
+    second <<- result + second
+    result
+  }
+}
+
+fc <- make_fib_counter()
+vapply(seq_len(6), function(...) fc(), numeric(1))
+```
+
+This produces `1, 1, 2, 3, 5, 8, ...` on successive calls.
+
+## Problem 6
+
+The same pattern can accept any initial pair:
+
+```{r}
+make_nocci <- function(c1, c2) {
+  function() {
+    result <- c1
+    c1 <<- c2
+    c2 <<- result + c2
+    result
+  }
+}
+
+nc <- make_nocci(2, 3)
+vapply(seq_len(5), function(...) nc(), numeric(1))
+```
+
+For this example the values are `2, 3, 5, 8, 13, ...`. Every call to
+`make_nocci` creates a separate enclosing environment, so separate counters do
+not share state.
+
+## Problem 7
+
+`make_nocci` first creates `c1` and `c2` in its function execution environment,
+then returns the inner function. The inner function retains a reference to that
+environment after `make_nocci` returns; this retained function plus its
+enclosing environment is a closure. On each invocation, `result <- c1` reads
+the current first value. The two `<<-` assignments shift the pair forward: the
+old second value becomes the new first value, and the sum becomes the new second
+value. The returned `result` is therefore the next value in the sequence.
+
+## Problem 8
+
+Examples of R environments include:
+
+* `.GlobalEnv`, the interactive workspace
+* `baseenv()`, the base package environment
+* `emptyenv()`, the parentless empty environment
+* a function's execution environment/call frame
+* the enclosing environment captured by a closure
+* `new.env()`, a newly created user environment
+* package environments such as `as.environment("package:stats")`
+* namespace environments such as `asNamespace("stats")`
+* parent environments obtained with `parent.env()`
+* the environment returned by `environment()` inside a function
+
+An environment maps names to bindings, has a parent environment, and can be
+mutated. It is not the same thing as a list or data frame, even though all
+three can store named values.
+
+## Verification
+
+The following checks exercise the functions above:
+
+```{r}
+stopifnot(identical(unname(vapply(seq_len(6), function(...) fc(), numeric(1))),
+                    c(1, 1, 2, 3, 5, 8)))
+stopifnot(identical(unname(vapply(seq_len(5), function(...) nc(), numeric(1))),
+                    c(2, 3, 5, 8, 13)))
+stopifnot(identical(unname(while_scope_test()), c(100, 101)))
+```
