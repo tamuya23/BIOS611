@@ -1,0 +1,4 @@
+# Local R session history should not be submitted.
+.Rhistory
+.RData
+.Ruserdata
