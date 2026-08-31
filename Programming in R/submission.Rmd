@@ -132,9 +132,11 @@ three can store named values.
 The following checks exercise the functions above:
 
 ```{r}
-stopifnot(identical(unname(vapply(seq_len(6), function(...) fc(), numeric(1))),
+fc_check <- make_fib_counter()
+nc_check <- make_nocci(2, 3)
+stopifnot(identical(unname(vapply(seq_len(6), function(...) fc_check(), numeric(1))),
                     c(1, 1, 2, 3, 5, 8)))
-stopifnot(identical(unname(vapply(seq_len(5), function(...) nc(), numeric(1))),
+stopifnot(identical(unname(vapply(seq_len(5), function(...) nc_check(), numeric(1))),
                     c(2, 3, 5, 8, 13)))
 stopifnot(identical(unname(while_scope_test()), c(100, 101)))
 ```
